@@ -78,7 +78,6 @@ process FILTER_MAF {
     reader = csv.DictReader(infile, delimiter='\t')
     writer = csv.DictWriter(outfile, reader.fieldnames, delimiter='\t')
     for row in reader:
-      print(row)
       if row['FILTER'] == 'PASS':
         writer.writerow(row)
   """
