@@ -31,6 +31,7 @@ process SYNAPSE_GET {
 }
 
 
+// TODO: Look at other vcf2maf options (like the sample names)
 process VCF2MAF {
 
   container "sagebionetworks/vcf2maf:gnomad-genomes"
@@ -55,6 +56,8 @@ process VCF2MAF {
 }
 
 
+// TODO: Sanity check output
+// TODO: Incorporate script inside container (or copy script to this repo)
 process MERGE_MAFS {
 
   container "python:3.10.4"
@@ -77,6 +80,7 @@ process MERGE_MAFS {
 }
 
 
+// TODO: Store Python script in a separate file
 process FILTER_MAF {
 
   container "python:3.10.4"
@@ -124,6 +128,7 @@ process SYNAPSE_STORE {
 }
 
 
+// TODO: Add comments
 workflow SAMPLE_MAFS {
 
   take:
@@ -145,6 +150,7 @@ workflow SAMPLE_MAFS {
 }
 
 
+// TODO: Add comments
 workflow MERGED_MAFS {
 
   take:
