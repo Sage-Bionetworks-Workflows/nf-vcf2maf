@@ -85,6 +85,23 @@ process FILTER_MAF {
 }
 
 
+process SYNAPSE_STORE {
+
+  container "sagebionetworks/synapsepythonclient:v2.6.0"
+
+  secret "SYNAPSE_AUTH_TOKEN"
+
+  input:
+  tuple path(input), val(parent_id)
+
+  script:
+  """
+  synapse store --parentId '${parent_id}' '${input}'
+  """
+
+}
+
+
 workflow {
 
   input_ch = Channel
@@ -111,7 +128,10 @@ workflow {
 
   FILTER_MAF(MERGE_MAFS.out)
 
-  FILTER_MAF.out.view()
+  merged_mafs_ch = MERGE_MAFS.out
+    .map { meta, maf -> [ maf, meta.merged_parent_id ] }
+
+  SYNAPSE_STORE(merged_mafs_ch)
 
 }
 
