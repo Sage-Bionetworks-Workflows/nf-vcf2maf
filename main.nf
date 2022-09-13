@@ -34,7 +34,7 @@ process SYNAPSE_GET {
 // TODO: Look at other vcf2maf options (like the sample names)
 process VCF2MAF {
 
-  container "sagebionetworks/vcf2maf:gnomad-genomes"
+  container "sagebionetworks/vcf2maf:107.1"
 
   input:                
   tuple val(meta), path(input_vcf)
