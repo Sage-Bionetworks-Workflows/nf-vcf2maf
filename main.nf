@@ -41,13 +41,13 @@ process VCF2MAF {
   path vep_data
 
   output:               
-  tuple val(meta), path("${input_vcf}.maf")
+  tuple val(meta), path("*.maf")
 
   script:
   vep_path = "/root/miniconda3/envs/vep/bin"
   """
   vcf2maf.pl \
-    --input-vcf '${input_vcf}' --output-maf ${input_vcf}.maf --ref-fasta '${reference_fasta}' \
+    --input-vcf '${input_vcf}' --output-maf ${input_vcf.baseName}.maf --ref-fasta '${reference_fasta}' \
     --vep-data '${vep_data}' --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
     --vep-path '${vep_path}' --maf-center '${params.maf_center}'
   """
@@ -63,13 +63,15 @@ process MERGE_MAFS {
   tuple val(meta), path(input_mafs)
 
   output:
-  tuple val(meta), path("${meta.study_id}.maf")
+  tuple val(meta), path("*.merged.maf")
 
   script:
   script_url = "https://raw.githubusercontent.com/genome-nexus/annotation-tools/master/merge_mafs.py"
   """
   wget ${script_url}
-  python3 merge_mafs.py -o ${meta.study_id}.maf -i ${input_mafs.join(',')}
+  python3 merge_mafs.py \
+    -o ${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf \
+    -i ${input_mafs.join(',')}
   """
 
 }
@@ -83,7 +85,7 @@ process FILTER_MAF {
   tuple val(meta), path(input_maf)
 
   output:
-  tuple val(meta), path("${input_maf}.filt.maf")
+  tuple val(meta), path("*.passed.maf")
 
   script:
   """
@@ -93,7 +95,7 @@ process FILTER_MAF {
 
   with (
       open('${input_maf}', newline='') as infile, 
-      open('${input_maf}.filt.maf', "w", newline='') as outfile
+      open('${input_maf.baseName}.passed.maf', "w", newline='') as outfile
   ):
     reader = csv.DictReader(infile, delimiter='\t')
     writer = csv.DictWriter(outfile, reader.fieldnames, delimiter='\t')
