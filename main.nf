@@ -55,6 +55,37 @@ process MERGE_MAFS {
 }
 
 
+process FILTER_MAF {
+
+  container "python:3.10.4"
+
+  input:
+  tuple val(meta), path(input_maf)
+
+  output:
+  tuple val(meta), path("${input_maf}.filt.maf")
+
+  script:
+  """
+  #!/usr/bin/env python3
+
+  import csv
+
+  with (
+      open('${input_maf}', newline='') as infile, 
+      open('${input_maf}.filt.maf', "w", newline='') as outfile
+  ):
+    reader = csv.DictReader(infile, delimiter='\t')
+    writer = csv.DictWriter(outfile, reader.fieldnames, delimiter='\t')
+    for row in reader:
+      print(row)
+      if row['FILTER'] == 'PASS':
+        writer.writerow(row)
+  """
+
+}
+
+
 workflow {
 
   input_ch = Channel
@@ -79,7 +110,9 @@ workflow {
   
   MERGE_MAFS(merged_inputs_ch)
 
-  MERGE_MAFS.out.view()
+  FILTER_MAF(MERGE_MAFS.out)
+
+  FILTER_MAF.out.view()
 
 }
 
