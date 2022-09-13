@@ -11,6 +11,26 @@ params.max_subpop_af = 0.0005
 params.ncbi_build = "GRCh38"
 
 
+process SYNAPSE_GET {
+
+  container "sagebionetworks/synapsepythonclient:v2.6.0"
+
+  secret "SYNAPSE_AUTH_TOKEN"
+
+  input:
+  tuple val(meta), val(synapse_id)
+
+  output:
+  tuple val(meta), path('*')
+
+  script:
+  """
+  synapse get '${synapse_id}'
+  """
+
+}
+
+
 process VCF2MAF {
 
   container "sagebionetworks/vcf2maf:gnomad-genomes"
@@ -102,36 +122,73 @@ process SYNAPSE_STORE {
 }
 
 
+workflow SAMPLE_MAFS {
+
+  take:
+    sample_vcfs
+
+  main:
+    SYNAPSE_GET(sample_vcfs)
+
+    VCF2MAF(SYNAPSE_GET.out, params.reference_fasta, params.vep_data)
+
+    sample_mafs_ch = VCF2MAF.out
+      .map { meta, maf -> [ maf, meta.sample_parent_id ] }
+
+    SYNAPSE_STORE(sample_mafs_ch)
+  
+  emit:
+    VCF2MAF.out
+
+}
+
+
+workflow MERGED_MAFS {
+
+  take:
+    sample_mafs
+
+  main:
+    merged_inputs_ch = sample_mafs
+      .filter { meta, maf -> meta.is_releasable }
+      .map {
+          vcf_meta, maf ->
+            def study_meta = [:]
+            study_meta.merged_parent_id = vcf_meta.merged_parent_id
+            study_meta.study_id         = vcf_meta.study_id
+            study_meta.variant_class    = vcf_meta.variant_class
+            study_meta.variant_caller   = vcf_meta.variant_caller
+            [ study_meta, maf ] 
+      }
+      .groupTuple( by: 0 )
+    
+    MERGE_MAFS(merged_inputs_ch)
+
+    FILTER_MAF(MERGE_MAFS.out)
+
+    merged_mafs_ch = MERGE_MAFS.out
+      .map { meta, maf -> [ maf, meta.merged_parent_id ] }
+
+    filtered_mafs_ch = FILTER_MAF.out
+      .map { meta, maf -> [ maf, meta.merged_parent_id ] }
+
+    both_mafs_ch = merged_mafs_ch.mix(filtered_mafs_ch)
+
+    SYNAPSE_STORE(both_mafs_ch)
+
+}
+
+
 workflow {
 
-  input_ch = Channel
+  input_vcfs_ch = Channel
     .fromPath ( params.input )
     .splitCsv ( header:true, sep:',' )
     .map { create_vcf_channel(it) }
 
-  VCF2MAF(input_ch, params.reference_fasta, params.vep_data)
+  SAMPLE_MAFS(input_vcfs_ch)
 
-  merged_inputs_ch = VCF2MAF.out
-    .filter { meta, maf -> meta.is_releasable }
-    .map {
-        vcf_meta, maf ->
-          def study_meta = [:]
-          study_meta.merged_parent_id = vcf_meta.merged_parent_id
-          study_meta.study_id         = vcf_meta.study_id
-          study_meta.variant_class    = vcf_meta.variant_class
-          study_meta.variant_caller   = vcf_meta.variant_caller
-          [ study_meta, maf ] 
-    }
-    .groupTuple( by: 0 )
-  
-  MERGE_MAFS(merged_inputs_ch)
-
-  FILTER_MAF(MERGE_MAFS.out)
-
-  merged_mafs_ch = MERGE_MAFS.out
-    .map { meta, maf -> [ maf, meta.merged_parent_id ] }
-
-  SYNAPSE_STORE(merged_mafs_ch)
+  MERGED_MAFS(SAMPLE_MAFS.out)
 
 }
 
@@ -149,7 +206,7 @@ def create_vcf_channel(LinkedHashMap row) {
   meta.is_releasable    = row.is_releasable.toBoolean()
 
   // Combine with VCF file element
-  def vcf_meta = [meta, file(row.vcf_file)]
+  def vcf_meta = [meta, row.synapse_id]
 
   return vcf_meta
 }
