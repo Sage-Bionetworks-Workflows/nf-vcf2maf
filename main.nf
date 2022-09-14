@@ -48,33 +48,10 @@ process VCF2MAF {
   vep_path = "/root/miniconda3/envs/vep/bin"
   """
   vcf2maf.pl \
-    --input-vcf '${input_vcf}' --output-maf ${input_vcf.baseName}.maf --ref-fasta '${reference_fasta}' \
+    --input-vcf '${input_vcf}' --output-maf ${input_vcf.baseName}.maf.raw --ref-fasta '${reference_fasta}' \
     --vep-data '${vep_data}' --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
     --vep-path '${vep_path}' --maf-center '${params.maf_center}'
-  """
-
-}
-
-
-// TODO: Sanity check output
-// TODO: Incorporate script inside container (or copy script to this repo)
-process MERGE_MAFS {
-
-  container "python:3.10.4"
-
-  input:                
-  tuple val(meta), path(input_mafs)
-
-  output:
-  tuple val(meta), path("*.merged.maf")
-
-  script:
-  script_url = "https://raw.githubusercontent.com/genome-nexus/annotation-tools/master/merge_mafs.py"
-  """
-  wget ${script_url}
-  python3 merge_mafs.py \
-    -o ${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf \
-    -i ${input_mafs.join(',')}
+  grep -v '^#' ${input_vcf.baseName}.maf.raw > ${input_vcf.baseName}.maf
   """
 
 }
@@ -103,12 +80,37 @@ process FILTER_MAF {
   ):
     reader = csv.DictReader(infile, delimiter='\t')
     writer = csv.DictWriter(outfile, reader.fieldnames, delimiter='\t')
+    writer.writeheader()
     for row in reader:
       if row['FILTER'] == 'PASS':
         writer.writerow(row)
   """
 
 }
+
+
+// TODO: Sanity check output
+// TODO: Incorporate script inside container (or copy script to this repo)
+process MERGE_MAFS {
+
+  container "python:3.10.4"
+
+  input:                
+  tuple val(meta), path(input_mafs)
+
+  output:
+  tuple val(meta), path("*.merged.maf")
+
+  script:
+  script_url = "https://raw.githubusercontent.com/genome-nexus/annotation-tools/master/merge_mafs.py"
+  """
+  wget ${script_url}
+  python3 merge_mafs.py \
+    -o ${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf \
+    -i ${input_mafs.join(',')}
+  """
+}
+
 
 
 process SYNAPSE_STORE {
@@ -143,9 +145,11 @@ workflow SAMPLE_MAFS {
       .map { meta, maf -> [ maf, meta.sample_parent_id ] }
 
     SYNAPSE_STORE(sample_mafs_ch)
+
+    FILTER_MAF(VCF2MAF.out)
   
   emit:
-    VCF2MAF.out
+    FILTER_MAF.out
 
 }
 
@@ -172,17 +176,10 @@ workflow MERGED_MAFS {
     
     MERGE_MAFS(merged_inputs_ch)
 
-    FILTER_MAF(MERGE_MAFS.out)
-
     merged_mafs_ch = MERGE_MAFS.out
       .map { meta, maf -> [ maf, meta.merged_parent_id ] }
 
-    filtered_mafs_ch = FILTER_MAF.out
-      .map { meta, maf -> [ maf, meta.merged_parent_id ] }
-
-    both_mafs_ch = merged_mafs_ch.mix(filtered_mafs_ch)
-
-    SYNAPSE_STORE(both_mafs_ch)
+    SYNAPSE_STORE(merged_mafs_ch)
 
 }
 
