@@ -24,9 +24,12 @@ aws s3 cp s3://ntap-add5-project-tower-bucket/outputs/sarek_syn29793238/VariantC
 gunzip ~/data/test.vcf.gz
 head -n 4000 ~/data/test.vcf ~/data/test-small.vcf
 
-# Install Nextflow
+# Install and setup Nextflow
 sudo yum install -y java
 (cd .local/bin && wget -qO- https://get.nextflow.io | bash)
+echo 'export NXF_ENABLE_SECRETS=true' >> ~/.bashrc
+source ~/.bashrc
+nextflow secrets put -n SYNAPSE_AUTH_TOKEN -v "<synapse-pat>"
 
 # Stage reference files in memory
 mkdir -p /dev/shm/vep/ /dev/shm/fasta/
