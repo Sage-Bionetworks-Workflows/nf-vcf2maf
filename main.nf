@@ -2,15 +2,6 @@
 
 nextflow.enable.dsl=2
 
-params.input = "$HOME/data/example.csv"
-params.reference_fasta = "/dev/shm/fasta/Homo_sapiens_assembly38.fasta"
-params.reference_fasta_fai = "${params.reference_fasta}.fai"
-params.vep_data = "/dev/shm/vep/"
-
-params.maf_center = "Sage Bionetworks"
-params.max_subpop_af = 0.0005
-params.ncbi_build = "GRCh38"
-
 
 process SYNAPSE_GET {
 
@@ -35,14 +26,15 @@ process SYNAPSE_GET {
 
 
 // TODO: Handle VCF genotype columns per variant caller
-// TODO: Add appropriate memory allocation
+// TODO: Improve handling of vep_path
 process VCF2MAF {
 
   tag "${meta.synapse_id}"
 
-  container "sagebionetworks/vcf2maf:107.1-debug2"
+  container "sagebionetworks/vcf2maf:107.1"
 
   cpus 8
+  memory '16.GB'
 
   afterScript "rm -f intermediate*"
 
@@ -58,17 +50,21 @@ process VCF2MAF {
   vep_path = "/root/miniconda3/envs/vep/bin"
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat '${input_vcf}' > 'intermediate.vcf'
+    zcat '${input_vcf}' | head 10000 > 'intermediate.vcf'
   else
-    mv '${input_vcf}' 'intermediate.vcf'
+    cat  '${input_vcf}' | head 10000 > 'intermediate.vcf'
   fi
+
+  mkdir -p 'vep_data/'
+  tar -zxf '${vep_data}' -C 'vep_data/'
 
   vcf2maf.pl \
     --input-vcf 'intermediate.vcf' --output-maf 'intermediate.maf.raw' \
-    --ref-fasta '${reference_fasta}' --vep-data '${vep_data}' \
+    --ref-fasta '${reference_fasta}' --vep-data 'vep_data/' \
     --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
     --vep-path '${vep_path}' --maf-center '${params.maf_center}' \
-    --tumor-id '${meta.biospecimen_id}' --vep-forks '${task.cpus}'
+    --tumor-id '${meta.biospecimen_id}' --vep-forks '${task.cpus}' \
+    --species ${params.species}
 
   grep -v '^#' 'intermediate.maf.raw' > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
   """
