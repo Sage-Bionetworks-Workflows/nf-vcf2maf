@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 
 params.input = "$HOME/data/example.csv"
 params.reference_fasta = "/dev/shm/fasta/Homo_sapiens_assembly38.fasta"
+params.reference_fasta_fai = "${params.reference_fasta}.fai"
 params.vep_data = "/dev/shm/vep/"
 
 params.maf_center = "Sage Bionetworks"
@@ -12,6 +13,8 @@ params.ncbi_build = "GRCh38"
 
 
 process SYNAPSE_GET {
+
+  tag "${meta.synapse_id}"
 
   container "sagebionetworks/synapsepythonclient:v2.6.0"
 
@@ -31,14 +34,21 @@ process SYNAPSE_GET {
 }
 
 
-// TODO: Look at other vcf2maf options (like the sample names)
+// TODO: Handle VCF genotype columns per variant caller
+// TODO: Add appropriate memory allocation
 process VCF2MAF {
 
-  container "sagebionetworks/vcf2maf:107.1"
+  tag "${meta.synapse_id}"
+
+  container "sagebionetworks/vcf2maf:107.1-debug2"
+
+  cpus 8
+
+  afterScript "rm -f intermediate*"
 
   input:                
   tuple val(meta), path(input_vcf)
-  path reference_fasta
+  tuple path(reference_fasta), path(reference_fasta_fai)
   path vep_data
 
   output:               
@@ -47,18 +57,28 @@ process VCF2MAF {
   script:
   vep_path = "/root/miniconda3/envs/vep/bin"
   """
+  if [[ ${input_vcf} == *.gz ]]; then
+    zcat '${input_vcf}' > 'intermediate.vcf'
+  else
+    mv '${input_vcf}' 'intermediate.vcf'
+  fi
+
   vcf2maf.pl \
-    --input-vcf '${input_vcf}' --output-maf ${input_vcf.baseName}.maf.raw --ref-fasta '${reference_fasta}' \
-    --vep-data '${vep_data}' --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
-    --vep-path '${vep_path}' --maf-center '${params.maf_center}'
-  grep -v '^#' ${input_vcf.baseName}.maf.raw > ${input_vcf.baseName}.maf
+    --input-vcf 'intermediate.vcf' --output-maf 'intermediate.maf.raw' \
+    --ref-fasta '${reference_fasta}' --vep-data '${vep_data}' \
+    --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
+    --vep-path '${vep_path}' --maf-center '${params.maf_center}' \
+    --tumor-id '${meta.biospecimen_id}' --vep-forks '${task.cpus}'
+
+  grep -v '^#' 'intermediate.maf.raw' > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
   """
 
 }
 
 
-// TODO: Store Python script in a separate file
 process FILTER_MAF {
+
+  tag "${input_maf.name}"
 
   container "python:3.10.4"
 
@@ -70,28 +90,16 @@ process FILTER_MAF {
 
   script:
   """
-  #!/usr/bin/env python3
-
-  import csv
-
-  with (
-      open('${input_maf}', newline='') as infile, 
-      open('${input_maf.baseName}.passed.maf', "w", newline='') as outfile
-  ):
-    reader = csv.DictReader(infile, delimiter='\t')
-    writer = csv.DictWriter(outfile, reader.fieldnames, delimiter='\t')
-    writer.writeheader()
-    for row in reader:
-      if row['FILTER'] == 'PASS':
-        writer.writerow(row)
+  filter_maf.py ${input_maf} ${input_maf.baseName}.passed.maf
   """
 
 }
 
 
 // TODO: Sanity check output
-// TODO: Incorporate script inside container (or copy script to this repo)
 process MERGE_MAFS {
+
+  tag "${meta.study_id}-${meta.variant_class}-${meta.variant_caller}"
 
   container "python:3.10.4"
 
@@ -102,18 +110,17 @@ process MERGE_MAFS {
   tuple val(meta), path("*.merged.maf")
 
   script:
-  script_url = "https://raw.githubusercontent.com/genome-nexus/annotation-tools/master/merge_mafs.py"
   """
-  wget ${script_url}
-  python3 merge_mafs.py \
+  merge_mafs.py \
     -o ${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf \
     -i ${input_mafs.join(',')}
   """
 }
 
 
-
 process SYNAPSE_STORE {
+
+  tag "${parent_id}/${input.name}"
 
   container "sagebionetworks/synapsepythonclient:v2.6.0"
 
@@ -137,9 +144,13 @@ workflow SAMPLE_MAFS {
     sample_vcfs
 
   main:
+    reference_fasta_pair = [
+      params.reference_fasta, params.reference_fasta_fai
+    ]
+
     SYNAPSE_GET(sample_vcfs)
 
-    VCF2MAF(SYNAPSE_GET.out, params.reference_fasta, params.vep_data)
+    VCF2MAF(SYNAPSE_GET.out, reference_fasta_pair, params.vep_data)
 
     sample_mafs_ch = VCF2MAF.out
       .map { meta, maf -> [ maf, meta.sample_parent_id ] }
@@ -203,6 +214,8 @@ def create_vcf_channel(LinkedHashMap row) {
   
   // Create metadata element
   def meta = [:]
+  meta.synapse_id       = row.synapse_id
+  meta.biospecimen_id   = row.biospecimen_id
   meta.sample_parent_id = row.sample_parent_id
   meta.merged_parent_id = row.merged_parent_id
   meta.study_id         = row.study_id
