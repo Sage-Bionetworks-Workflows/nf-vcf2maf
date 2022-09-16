@@ -81,7 +81,7 @@ process VCF2MAF {
     --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
     --vep-path '${vep_path}' --maf-center '${params.maf_center}' \
     --tumor-id '${meta.biospecimen_id}' --vep-forks '${vep_forks}' \
-    --species ${params.species}
+    --species '${params.species}'
 
   grep -v '^#' 'intermediate.maf.raw' > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
   """
