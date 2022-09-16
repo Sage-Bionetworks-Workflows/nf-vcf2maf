@@ -73,9 +73,10 @@ Check out the [Quickstart](#quickstart) section for example parameter values. Yo
 
 ### Samplesheet
 
-The input samplesheet should be in comma-separated values (CSV) format and contain the following columns:
+The input samplesheet should be in comma-separated values (CSV) format and contain the following columns. **You should avoid using spaces or special characters in any of the columns.** Otherwise, you might run into job caching issues.
 
 1. **`synapse_id`**: Synapse ID of the VCF file
+   - Make sure that the Synapse account associated with the personal access token has access to all listed VCF files
 2. **`biospecimen_id`**: Biospecimen/sample identifier
     - This value will be used to populate the `Tumor_Sample_Barcode` MAF column
     - **Important:** This value needs to uniquely identify samples within each merged MAF file. See [below](#maf-files) for information on how MAF files are merged.

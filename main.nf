@@ -21,6 +21,7 @@ process SYNAPSE_GET {
   script:
   """
   synapse get ${synapse_id}
+  for f in *\ *; do mv "\${f}" "\${f// /_}"; done
   """
 
 }
@@ -74,9 +75,9 @@ process VCF2MAF {
   vep_forks = task.cpus + 2
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat ${input_vcf} > intermediate.vcf
+    zcat ${input_vcf} | head -n 10000 > intermediate.vcf
   else
-    cat  ${input_vcf} > intermediate.vcf
+    cat  ${input_vcf} | head -n 10000 > intermediate.vcf
   fi
 
   vcf2maf.pl \
