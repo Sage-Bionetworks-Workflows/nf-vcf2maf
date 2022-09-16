@@ -22,8 +22,7 @@ process SYNAPSE_GET {
   """
   synapse get ${synapse_id}
 
-  shopt -s nullglob
-  for f in *\ *; do mv "\${f}" "\${f// /_}"; done
+  find . -type f -name "* *.xml" -exec bash -c 'mv "$0" "${0// /_}"' {} \;
   """
 
 }
