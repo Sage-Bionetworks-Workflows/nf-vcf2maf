@@ -54,7 +54,8 @@ process VCF2MAF {
   container "sagebionetworks/vcf2maf:107.2"
 
   cpus   6
-  memory 8.GB * task.attempt
+  memory { 8.GB * task.attempt }
+  maxRetries 3
 
   afterScript "rm -f intermediate*"
 
