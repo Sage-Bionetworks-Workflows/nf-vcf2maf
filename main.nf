@@ -130,7 +130,7 @@ process MERGE_MAFS {
   script:
   prefix = "${meta.study_id}-${meta.variant_class}-${meta.variant_caller}"
   """
-  merge_mafs.py -d './' -o '${prefix}.merged.maf'
+  merge_mafs.py -i ${input_mafs.join(',')} -o '${prefix}.merged.maf'
   """
 }
 
