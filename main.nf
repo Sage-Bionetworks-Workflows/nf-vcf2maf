@@ -52,8 +52,8 @@ process VCF2MAF {
 
   container "sagebionetworks/vcf2maf:107.2"
 
-  cpus 8
-  memory '16.GB'
+  cpus   6
+  memory 8.GB * task.attempt
 
   afterScript "rm -f intermediate*"
 
@@ -67,6 +67,7 @@ process VCF2MAF {
 
   script:
   vep_path = "/root/miniconda3/envs/vep/bin"
+  vep_forks = task.cpus + 2
   """
   if [[ ${input_vcf} == *.gz ]]; then
     zcat '${input_vcf}' > 'intermediate.vcf'
@@ -79,7 +80,7 @@ process VCF2MAF {
     --ref-fasta '${reference_fasta}' --vep-data '${vep_data}/' \
     --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
     --vep-path '${vep_path}' --maf-center '${params.maf_center}' \
-    --tumor-id '${meta.biospecimen_id}' --vep-forks '${task.cpus}' \
+    --tumor-id '${meta.biospecimen_id}' --vep-forks '${vep_forks}' \
     --species ${params.species}
 
   grep -v '^#' 'intermediate.maf.raw' > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
