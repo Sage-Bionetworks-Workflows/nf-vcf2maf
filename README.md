@@ -1,4 +1,4 @@
-# nf-vcf2maf: Annotate Variants (VCF) and Generate MAF Files
+# nf-vcf2maf: Annotate VCF Files and Generate MAF Files
 
 ## Purpose
 
