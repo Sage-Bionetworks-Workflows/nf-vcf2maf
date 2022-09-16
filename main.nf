@@ -27,7 +27,7 @@ process SYNAPSE_GET {
 
 process EXTRACT_TAR_GZ {
 
-  container "sagebionetworks/vcf2maf:107.1"
+  container "sagebionetworks/vcf2maf:107.2"
 
   input:
   path vep_tarball
