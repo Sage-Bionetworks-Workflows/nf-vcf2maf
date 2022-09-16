@@ -172,7 +172,7 @@ workflow SAMPLE_MAFS {
     EXTRACT_TAR_GZ(params.vep_tarball)
 
     // Run vcf2maf on each vcf file
-    VCF2MAF(SYNAPSE_GET.out, reference_fasta_pair, EXTRACT_TAR_GZ.out)
+    VCF2MAF(SYNAPSE_GET.out, ref_fasta_pair, EXTRACT_TAR_GZ.out)
 
     // Upload MAF files to Synapse
     sample_mafs_ch = VCF2MAF.out
