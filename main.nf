@@ -71,8 +71,9 @@ process VCF2MAF {
   // TODO: Remove hard-coded VEP path
   // TODO: Handle VCF genotype columns per variant caller
   script:
-  vep_path = "/root/miniconda3/envs/vep/bin"
+  vep_path  = "/root/miniconda3/envs/vep/bin"
   vep_forks = task.cpus + 2
+  basename  = input_vcf.name.replaceAll(/.gz$/, "").replaceAll(/.vcf$/, "")
   """
   if [[ ${input_vcf} == *.gz ]]; then
     zcat ${input_vcf} | head -n 10000 > intermediate.vcf
@@ -88,7 +89,7 @@ process VCF2MAF {
     --tumor-id '${meta.biospecimen_id}' --vep-forks ${vep_forks} \
     --species ${params.species}
 
-  grep -v '^#' intermediate.maf.raw > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
+  grep -v '^#' intermediate.maf.raw > '${basename}.maf'
   """
 
 }
