@@ -22,7 +22,7 @@ process SYNAPSE_GET {
   """
   synapse get ${synapse_id}
 
-  find . -type f -name "* *.xml" -exec bash -c 'mv "$0" "${0// /_}"' {} \;
+  find . -type f -name "* *" -exec bash -c 'mv "\$0" "\${0// /_}"' {} \;
   """
 
 }
