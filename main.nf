@@ -216,7 +216,7 @@ workflow {
   // Parse input CSV sample sheet
   input_vcfs_ch = Channel
     .fromPath ( params.input )
-    .splitCsv ( header:true, sep:',' )
+    .splitCsv ( header:true, strip:true )
     .map { create_vcf_channel(it) }
 
   // Process individual sample VCF files
