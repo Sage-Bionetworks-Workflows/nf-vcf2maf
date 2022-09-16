@@ -20,7 +20,7 @@ process SYNAPSE_GET {
 
   script:
   """
-  synapse get '${synapse_id}'
+  synapse get ${synapse_id}
   """
 
 }
@@ -39,8 +39,8 @@ process EXTRACT_TAR_GZ {
 
   script:
   """
-  mkdir -p 'vep_data/'
-  tar -zxf '${vep_tarball}' -C 'vep_data/'
+  mkdir -p vep_data/
+  tar -zxf ${vep_tarball} -C vep_data/
   """
 
 }
@@ -74,20 +74,20 @@ process VCF2MAF {
   vep_forks = task.cpus + 2
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat '${input_vcf}' | head -n 10000 > 'intermediate.vcf'
+    zcat ${input_vcf} | head -n 10000 > intermediate.vcf
   else
-    cat  '${input_vcf}' | head -n 10000 > 'intermediate.vcf'
+    cat  ${input_vcf} | head -n 10000 > intermediate.vcf
   fi
 
   vcf2maf.pl \
-    --input-vcf 'intermediate.vcf' --output-maf 'intermediate.maf.raw' \
-    --ref-fasta '${reference_fasta}' --vep-data '${vep_data}/' \
-    --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
-    --vep-path '${vep_path}' --maf-center '${params.maf_center}' \
-    --tumor-id '${meta.biospecimen_id}' --vep-forks '${vep_forks}' \
-    --species '${params.species}'
+    --input-vcf intermediate.vcf --output-maf intermediate.maf.raw \
+    --ref-fasta ${reference_fasta} --vep-data ${vep_data}/ \
+    --ncbi-build ${params.ncbi_build} --max-subpop-af ${params.max_subpop_af} \
+    --vep-path ${vep_path} --maf-center ${params.maf_center} \
+    --tumor-id '${meta.biospecimen_id}' --vep-forks ${vep_forks} \
+    --species ${params.species}
 
-  grep -v '^#' 'intermediate.maf.raw' > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
+  grep -v '^#' intermediate.maf.raw > '${meta.biospecimen_id}-${meta.variant_class}-${meta.variant_caller}.maf'
   """
 
 }
@@ -108,7 +108,7 @@ process FILTER_MAF {
 
   script:
   """
-  filter_maf.py '${input_maf}' '${input_maf.baseName}.passed.maf'
+  filter_maf.py ${input_maf} '${input_maf.baseName}.passed.maf'
   """
 
 }
@@ -128,10 +128,9 @@ process MERGE_MAFS {
   tuple val(meta), path("*.merged.maf")
 
   script:
+  prefix = "${meta.study_id}-${meta.variant_class}-${meta.variant_caller}"
   """
-  merge_mafs.py \
-    -o '${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf' \
-    -i '${input_mafs.join(',')}'
+  merge_mafs.py -d './' -o '${prefix}.merged.maf'
   """
 }
 
@@ -150,7 +149,7 @@ process SYNAPSE_STORE {
 
   script:
   """
-  synapse store --parentId '${parent_id}' '${input}'
+  synapse store --parentId ${parent_id} ${input}
   """
 
 }
