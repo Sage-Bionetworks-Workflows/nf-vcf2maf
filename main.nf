@@ -69,9 +69,9 @@ process VCF2MAF {
   vep_path = "/root/miniconda3/envs/vep/bin"
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat '${input_vcf}' | head -n 10000 > 'intermediate.vcf'
+    zcat '${input_vcf}' > 'intermediate.vcf'
   else
-    cat  '${input_vcf}' | head -n 10000 > 'intermediate.vcf'
+    cat  '${input_vcf}' > 'intermediate.vcf'
   fi
 
   vcf2maf.pl \
