@@ -258,7 +258,6 @@ def subset_study_meta(vcf_meta, maf) {
   study_meta.study_id         = vcf_meta.study_id
   study_meta.variant_class    = vcf_meta.variant_class
   study_meta.variant_caller   = vcf_meta.variant_caller
-  [ study_meta, maf ] 
 
-  return vcf_meta
+  return [ study_meta, maf ]
 }
