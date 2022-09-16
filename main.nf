@@ -102,7 +102,7 @@ process FILTER_MAF {
 
   script:
   """
-  filter_maf.py ${input_maf} ${input_maf.baseName}.passed.maf
+  filter_maf.py '${input_maf}' '${input_maf.baseName}.passed.maf'
   """
 
 }
@@ -124,8 +124,8 @@ process MERGE_MAFS {
   script:
   """
   merge_mafs.py \
-    -o ${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf \
-    -i ${input_mafs.join(',')}
+    -o '${meta.study_id}-${meta.variant_class}-${meta.variant_caller}.merged.maf' \
+    -i '${input_mafs.join(',')}'
   """
 }
 
