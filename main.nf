@@ -74,9 +74,9 @@ process VCF2MAF {
   vep_forks = task.cpus + 2
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat ${input_vcf} | head -n 10000 > intermediate.vcf
+    zcat ${input_vcf} > intermediate.vcf
   else
-    cat  ${input_vcf} | head -n 10000 > intermediate.vcf
+    cat  ${input_vcf} > intermediate.vcf
   fi
 
   vcf2maf.pl \
