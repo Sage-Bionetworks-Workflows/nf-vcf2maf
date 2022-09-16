@@ -25,6 +25,25 @@ process SYNAPSE_GET {
 }
 
 
+process EXTRACT_TAR_GZ {
+
+  container "sagebionetworks/vcf2maf:107.1"
+
+  input:
+  path vep_tarball
+
+  output:
+  path "vep_data"
+
+  script:
+  """
+  mkdir -p 'vep_data/'
+  tar -zxf '${vep_tarball}' -C 'vep_data/'
+  """
+
+}
+
+
 // TODO: Handle VCF genotype columns per variant caller
 // TODO: Improve handling of vep_path
 process VCF2MAF {
@@ -50,17 +69,14 @@ process VCF2MAF {
   vep_path = "/root/miniconda3/envs/vep/bin"
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat '${input_vcf}' | head 10000 > 'intermediate.vcf'
+    zcat '${input_vcf}' | head -n 10000 > 'intermediate.vcf'
   else
-    cat  '${input_vcf}' | head 10000 > 'intermediate.vcf'
+    cat  '${input_vcf}' | head -n 10000 > 'intermediate.vcf'
   fi
-
-  mkdir -p 'vep_data/'
-  tar -zxf '${vep_data}' -C 'vep_data/'
 
   vcf2maf.pl \
     --input-vcf 'intermediate.vcf' --output-maf 'intermediate.maf.raw' \
-    --ref-fasta '${reference_fasta}' --vep-data 'vep_data/' \
+    --ref-fasta '${reference_fasta}' --vep-data '${vep_data}/' \
     --ncbi-build '${params.ncbi_build}' --max-subpop-af '${params.max_subpop_af}' \
     --vep-path '${vep_path}' --maf-center '${params.maf_center}' \
     --tumor-id '${meta.biospecimen_id}' --vep-forks '${task.cpus}' \
@@ -146,7 +162,9 @@ workflow SAMPLE_MAFS {
 
     SYNAPSE_GET(sample_vcfs)
 
-    VCF2MAF(SYNAPSE_GET.out, reference_fasta_pair, params.vep_data)
+    EXTRACT_TAR_GZ(params.vep_tarball)
+
+    VCF2MAF(SYNAPSE_GET.out, reference_fasta_pair, EXTRACT_TAR_GZ.out)
 
     sample_mafs_ch = VCF2MAF.out
       .map { meta, maf -> [ maf, meta.sample_parent_id ] }
