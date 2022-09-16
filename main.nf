@@ -50,7 +50,7 @@ process VCF2MAF {
 
   tag "${meta.synapse_id}"
 
-  container "sagebionetworks/vcf2maf:107.1"
+  container "sagebionetworks/vcf2maf:107.2"
 
   cpus 8
   memory '16.GB'
