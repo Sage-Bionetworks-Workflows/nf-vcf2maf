@@ -58,6 +58,8 @@ process VCF2MAF {
 
   cpus   6
   memory { 8.GB * task.attempt }
+
+  errorStrategy = 'retry'
   maxRetries 3
 
   afterScript "rm -f intermediate*"
@@ -124,6 +126,11 @@ process MERGE_MAFS {
   tag "${meta.study_id}-${meta.variant_class}-${meta.variant_caller}"
 
   container "python:3.10.4"
+
+  memory { 16.GB * task.attempt }
+  
+  errorStrategy = 'retry'
+  maxRetries 3
 
   input:                
   tuple val(meta), path(input_mafs)
