@@ -18,12 +18,13 @@ process SYNAPSE_GET {
   output:
   tuple val(meta), path('*')
 
-  script:
-  """
-  synapse get ${synapse_id}
+  shell:
+  '''
+  synapse get !{synapse_id}
 
-  find . -type f -name "* *" -exec bash -c 'mv "\$0" "\${0// /_}"' {} \;
-  """
+  shopt -s nullglob
+  for f in *\ *; do mv "${f}" "${f// /_}"; done
+  '''
 
 }
 
