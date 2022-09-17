@@ -18,13 +18,13 @@ process SYNAPSE_GET {
   output:
   tuple val(meta), path('*')
 
-  shell:
-  '''
-  synapse get !{synapse_id}
+  script:
+  """
+  synapse get ${synapse_id}
 
   shopt -s nullglob
-  for f in *\\ *; do mv "${f}" "${f// /_}"; done
-  '''
+  for f in *\\ *; do mv "\${f}" "\${f// /_}"; done
+  """
 
 }
 
