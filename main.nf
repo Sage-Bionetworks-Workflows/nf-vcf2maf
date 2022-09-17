@@ -64,12 +64,12 @@ process VCF2MAF {
 
   afterScript "rm -f intermediate*"
 
-  input:                
+  input:
   tuple val(meta), path(input_vcf)
   tuple path(reference_fasta), path(reference_fasta_fai)
   path vep_data
 
-  output:               
+  output:
   tuple val(meta), path("*.maf")
 
   // TODO: Remove hard-coded VEP path
@@ -128,11 +128,11 @@ process MERGE_MAFS {
   container "python:3.10.4"
 
   memory { 16.GB * task.attempt }
-  
+
   errorStrategy = 'retry'
   maxRetries 3
 
-  input:                
+  input:
   tuple val(meta), path(input_mafs)
 
   output:
@@ -189,7 +189,7 @@ workflow SAMPLE_MAFS {
     sample_mafs_ch = VCF2MAF.out
       .map { meta, maf -> [ maf, meta.sample_parent_id ] }
     SYNAPSE_STORE(sample_mafs_ch)
-  
+
   emit:
     VCF2MAF.out
 
@@ -241,7 +241,7 @@ workflow {
 
 // Function to get list of [ meta, vcf ]
 def create_vcf_channel(LinkedHashMap row) {
-  
+
   // Create metadata element
   def meta = [:]
   meta.synapse_id       = row.synapse_id
@@ -262,7 +262,7 @@ def create_vcf_channel(LinkedHashMap row) {
 
 // Function to get list of [ study_meta, maf ]
 def subset_study_meta(vcf_meta, maf) {
-  
+
   // Subset metadata element
   def study_meta = [:]
   study_meta.merged_parent_id = vcf_meta.merged_parent_id
