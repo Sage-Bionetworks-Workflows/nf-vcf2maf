@@ -23,7 +23,7 @@ process SYNAPSE_GET {
   synapse get !{synapse_id}
 
   shopt -s nullglob
-  for f in *\ *; do mv "${f}" "${f// /_}"; done
+  for f in *\\ *; do mv "${f}" "${f// /_}"; done
   '''
 
 }
