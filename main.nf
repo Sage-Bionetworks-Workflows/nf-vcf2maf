@@ -80,9 +80,9 @@ process VCF2MAF {
   basename  = input_vcf.name.replaceAll(/.gz$/, "").replaceAll(/.vcf$/, "")
   """
   if [[ ${input_vcf} == *.gz ]]; then
-    zcat ${input_vcf} | head -n 10000 > intermediate.vcf
+    zcat ${input_vcf} > intermediate.vcf
   else
-    cat  ${input_vcf} | head -n 10000 > intermediate.vcf
+    cat  ${input_vcf} > intermediate.vcf
   fi
 
   vcf2maf.pl \
