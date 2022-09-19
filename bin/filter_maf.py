@@ -14,5 +14,5 @@ with (
     writer = csv.DictWriter(outfile, reader.fieldnames, delimiter='\t')
     writer.writeheader()
     for row in reader:
-        if row['FILTER'] == 'PASS':
+        if row['FILTER'].lower().strip() in {'pass', '.', ''}:
             writer.writerow(row)

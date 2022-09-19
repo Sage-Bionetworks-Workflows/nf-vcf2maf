@@ -102,7 +102,7 @@ process VCF2MAF {
 // Process for filtering MAF files for passed variants
 process FILTER_MAF {
 
-  tag "${input_maf.name}"
+  tag "${meta.synapse_id}"
 
   container "python:3.10.4"
 
@@ -203,12 +203,15 @@ workflow STUDY_MAFS {
     sample_mafs
 
   main:
+    // Only consider releasable MAF files
+    releasable_mafs = sample_mafs
+      .filter { meta, maf -> meta.is_releasable }
+    
     // Filter MAF files for passed variants
-    FILTER_MAF(sample_mafs)
+    FILTER_MAF(releasable_mafs)
 
     // Group MAF files by study and merge
     mafs_by_study_ch = FILTER_MAF.out
-      .filter { meta, maf -> meta.is_releasable }
       .map { meta, maf -> subset_study_meta(meta, maf) }
       .groupTuple( by: 0 )
     MERGE_MAFS(mafs_by_study_ch)
