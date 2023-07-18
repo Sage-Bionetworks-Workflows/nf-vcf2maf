@@ -57,7 +57,7 @@ process VCF2MAF {
   container "sagebionetworks/vcf2maf:107.2"
 
   cpus   6
-  memory { 8.GB * task.attempt }
+  memory { 32.GB * task.attempt }
 
   errorStrategy = 'retry'
   maxRetries 3
