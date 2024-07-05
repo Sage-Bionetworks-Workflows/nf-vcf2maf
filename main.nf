@@ -32,7 +32,7 @@ process SYNAPSE_GET {
 // Process for decompressing and extracting the VEP cache tarball
 process EXTRACT_TAR_GZ {
 
-  container "ghcr.io/allaway/vcf2maf-docker:sha256-0a19f8b8a118a72d6efa5064ef5e8f5d71f2bd79ef8a5031a100ba8e3ba9349a.sig"
+  container "ghcr.io/allaway/vcf2maf-docker:main"
 
   input:
   path vep_tarball
@@ -54,7 +54,7 @@ process VCF2MAF {
 
   tag "${meta.synapse_id}"
 
-  container "ghcr.io/allaway/vcf2maf-docker:sha256-0a19f8b8a118a72d6efa5064ef5e8f5d71f2bd79ef8a5031a100ba8e3ba9349a.sig"
+  container "ghcr.io/allaway/vcf2maf-docker:main"
 
   cpus   6
   memory { 32.GB * task.attempt }
