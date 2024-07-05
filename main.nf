@@ -32,7 +32,7 @@ process SYNAPSE_GET {
 // Process for decompressing and extracting the VEP cache tarball
 process EXTRACT_TAR_GZ {
 
-  container "sagebionetworks/vcf2maf:107.2"
+  container "allawayr/vcf2maf:112.1"
 
   input:
   path vep_tarball
@@ -54,7 +54,7 @@ process VCF2MAF {
 
   tag "${meta.synapse_id}"
 
-  container "sagebionetworks/vcf2maf:107.2"
+  container "sagebionetworks/vcf2maf:112.1"
 
   cpus   6
   memory { 32.GB * task.attempt }
