@@ -78,6 +78,13 @@ process VCF2MAF {
   vep_path  = "/root/miniconda3/envs/vep/bin"
   vep_forks = task.cpus - 2
   basename  = input_vcf.name.replaceAll(/.gz$/, "").replaceAll(/.vcf$/, "")
+  
+  // Add vcf_tumor_id and vcf_normal_id for somatic Strelka samples
+  strelka_params = ""
+  if (meta.variant_class == "somatic" && meta.variant_caller.toLowerCase() == "strelka") {
+    strelka_params = "--vcf-tumor-id TUMOR --vcf-normal-id NORMAL"
+  }
+  
   """
   if [[ ${input_vcf} == *.gz ]]; then
     zcat ${input_vcf} > intermediate.vcf
@@ -91,7 +98,7 @@ process VCF2MAF {
     --ncbi-build ${params.ncbi_build} --max-subpop-af ${params.max_subpop_af} \
     --vep-path ${vep_path} --maf-center ${params.maf_center} \
     --tumor-id '${meta.biospecimen_id}' --vep-forks ${vep_forks} \
-    --species ${params.species}
+    --species ${params.species} ${strelka_params}
 
   grep -v '^#' intermediate.maf.raw > '${basename}.maf'
   """
