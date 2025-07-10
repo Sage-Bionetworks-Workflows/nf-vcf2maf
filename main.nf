@@ -76,7 +76,7 @@ process VCF2MAF {
   container "ghcr.io/allaway/vcf2maf-docker:main"
 
   cpus   6
-  memory { 32.GB * task.attempt }
+  memory { 64.GB * task.attempt }
 
   errorStrategy = 'retry'
   maxRetries 3
@@ -95,7 +95,7 @@ process VCF2MAF {
   // TODO: Handle VCF genotype columns per variant caller
   script:
   vep_path  = "/root/miniconda3/envs/vep/bin"
-  vep_forks = task.cpus + 2
+  vep_forks = task.cpus - 2
   basename  = input_vcf.name.replaceAll(/.gz$/, "").replaceAll(/.vcf$/, "")
   """
   if [[ ${input_vcf} == *.gz ]]; then

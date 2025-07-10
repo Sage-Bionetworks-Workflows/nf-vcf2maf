@@ -1,5 +1,8 @@
 # nf-vcf2maf: Annotate VCF Files and Generate MAF Files
 
+> [!NOTE]
+> This repository is no longer being actively maintained, but the functionality should still work
+
 ## Purpose
 
 The purpose of this Nextflow workflow is to annotate variants in VCF files using the Ensembl Variant Effect Predictor (VEP) and convert the annotated VCF file into the [Mutation Annotation Format](https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format/) (MAF). Unlike VEP-anntotated VCF files, MAF files are generally more useful for downstream applications given their tabular nature. For example, you can easily load them into R (_e.g._ with the [`maftools`](https://www.bioconductor.org/packages/release/bioc/html/maftools.html) package) and/or derive the input files for [cBioPortal](https://www.cbioportal.org/visualize).
