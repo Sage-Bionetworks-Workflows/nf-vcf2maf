@@ -32,7 +32,7 @@ process SYNAPSE_GET {
 // Process for decompressing and extracting the VEP cache tarball
 process EXTRACT_TAR_GZ {
 
-  container "sagebionetworks/vcf2maf:107.2"
+  container "ghcr.io/allaway/vcf2maf-docker:main"
 
   input:
   path vep_tarball
@@ -48,13 +48,32 @@ process EXTRACT_TAR_GZ {
 
 }
 
+// Process for retrieving AlphaMissense plugin and database
+process GET_INDEX_ALPHAMISSENSE {
+
+  container "ghcr.io/allaway/vcf2maf-docker:main"
+
+  input:
+  path alphamissense_gz
+
+  output:
+  path "am_data"
+
+  script:
+  """
+  mkdir -p am_data/
+  wget ${alphamissense_gz}
+  tabix -s 1 -b 2 -e 2 -f -S 1 AlphaMissense_hg38.tsv.gz
+  """
+
+}
 
 // Process for annotating VCF file and converting to MAF
 process VCF2MAF {
 
   tag "${meta.synapse_id}"
 
-  container "sagebionetworks/vcf2maf:107.2"
+  container "ghcr.io/allaway/vcf2maf-docker:main"
 
   cpus   6
   memory { 64.GB * task.attempt }
