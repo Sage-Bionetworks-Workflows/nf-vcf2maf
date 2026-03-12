@@ -87,7 +87,8 @@ process VCF2MAF {
 
   // Add VEP stats parameter to pass --vep-stats to vcf2maf so it does not append --no_stats internally.
   // By default, vcf2maf.pl appends --no_stats to the VEP command unless --vep-stats is provided.
-  // vcf2maf.pl (container line 461): $vep_cmd .= " --no_stats" unless( $vep_stats );
+  // vcf2maf.pl script (dockerhub sagebionetworks/vcf2maf:107.2 container line 461)
+  // $vep_cmd .= " --no_stats" unless( $vep_stats );
   // Default --no_stats behavior causes a known Ensembl VEP issue fail with
   // "substr outside of string" in TranscriptVariationAllele.pm.
   // The Ensembl VEP team currently recommends avoiding --no_stats as a short-term workaround.
