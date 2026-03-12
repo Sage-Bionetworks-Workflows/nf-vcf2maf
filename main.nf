@@ -84,7 +84,16 @@ process VCF2MAF {
   if (meta.variant_class == "somatic" && meta.variant_caller.toLowerCase() == "strelka") {
     strelka_params = "--vcf-tumor-id TUMOR --vcf-normal-id NORMAL"
   }
-  
+
+  // Add VEP stats parameter to pass --vep-stats to vcf2maf so it does not append --no_stats internally.
+  // By default, vcf2maf.pl appends --no_stats to the VEP command unless --vep-stats is provided.
+  // vcf2maf.pl (container line 461): $vep_cmd .= " --no_stats" unless( $vep_stats );
+  // Default --no_stats behavior causes a known Ensembl VEP issue fail with
+  // "substr outside of string" in TranscriptVariationAllele.pm.
+  // The Ensembl VEP team currently recommends avoiding --no_stats as a short-term workaround.
+  // Set params.vep_stats_params = false to suppress --vep-stats.
+  vep_stats_params = params.vep_stats_params ? "--vep-stats" : ""
+
   """
   if [[ ${input_vcf} == *.gz ]]; then
     zcat ${input_vcf} > intermediate.vcf
@@ -98,7 +107,7 @@ process VCF2MAF {
     --ncbi-build ${params.ncbi_build} --max-subpop-af ${params.max_subpop_af} \
     --vep-path ${vep_path} --maf-center ${params.maf_center} \
     --tumor-id '${meta.biospecimen_id}' --vep-forks ${vep_forks} \
-    --species ${params.species} ${strelka_params}
+    --species ${params.species} ${strelka_params} ${vep_stats_params}
 
   grep -v '^#' intermediate.maf.raw > '${basename}.maf'
   """
