@@ -71,6 +71,7 @@ Check out the [Quickstart](#quickstart) section for example parameter values. Yo
 - **`vep_tarball`**: A tarball (ideally compressed) of the VEP cache. Default: `"s3://sage-igenomes/vep_cache/homo_sapiens_vep_107_GRCh38.tar.gz"`.
 - **`ncbi_build`**: The NCBI genome build. Passed to `--assembly` in VEP ([source](http://Jul2022.archive.ensembl.org/info/docs/tools/vep/script/vep_options.html)). Default: `"GRCh38"`.
 - **`species`**: The species identifier. Passed to `--species` in VEP ([source](http://Jul2022.archive.ensembl.org/info/docs/tools/vep/script/vep_options.html)). Default: `"homo_sapiens"`.
+- **`vep_stats_params`**: Whether to pass `--vep-stats` to `vcf2maf.pl`, which prevents it from appending `--no_stats` to the internal VEP command. `--no_stats` causes a known VEP bug ([source](https://github.com/Ensembl/ensembl-vep/issues/1013#issuecomment-874079598)) with no fix planned; the VEP team  run VEP without the option `--no_stats`. Set to `false` to restore the original `--no_stats` behaviour. Default: `true`.
 
 ## Inputs
 
