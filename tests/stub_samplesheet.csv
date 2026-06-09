@@ -1,2 +1,0 @@
-synapse_id,biospecimen_id,sample_parent_id,merged_parent_id,study_id,variant_class,variant_caller,is_releasable
-syn001,SAMPLE001,syn100,syn200,STUDY001,somatic,mutect2,true
