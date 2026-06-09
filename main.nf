@@ -59,7 +59,7 @@ process VCF2MAF {
   cpus   6
   memory { 64.GB * task.attempt }
 
-  errorStrategy = 'retry'
+  errorStrategy 'retry'
   maxRetries 3
 
   afterScript "rm -f intermediate*"
@@ -146,7 +146,7 @@ process MERGE_MAFS {
 
   memory { 16.GB * task.attempt }
 
-  errorStrategy = 'retry'
+  errorStrategy 'retry'
   maxRetries 3
 
   input:
